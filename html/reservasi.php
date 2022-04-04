@@ -1,4 +1,18 @@
-<?php include("koneksi.php") ?>
+<?php
+include("koneksi.php");
+session_start();
+//get previous data
+$data = null;
+if (isset($_SESSION['no_ktp'])) {
+  $pemesan = "SELECT * FROM tb_pemesanan LEFT JOIN tb_rekening ON tb_pemesanan.jenis_rek = tb_rekening.id_rek
+  WHERE tb_pemesanan.no_ktp='" . $_SESSION['no_ktp'] . "'";
+  $result = mysqli_query($conn, $pemesan);
+  while ($dataPemesan = mysqli_fetch_assoc($result)) {
+    $data = $dataPemesan;
+  }
+}
+// var_dump($data); die;
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -23,6 +37,8 @@
   <link rel="stylesheet" href="../assets/vendor/fancybox/css/jquery.fancybox.css">
 
   <link rel="stylesheet" href="../assets/css/theme.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
 </head>
 
@@ -59,8 +75,7 @@
       <div class="container">
         <a href="index.php" class="navbar-brand">Museum<span class="text-primary"> Trinil</span></a>
 
-        <button class="navbar-toggler" data-toggle="collapse" data-target="#navbarContent" aria-controls="navbarContent"
-          aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" data-toggle="collapse" data-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -73,7 +88,7 @@
               <a href="about.php" class="nav-link">Tentang</a>
             </li>
             <li class="nav-item">
-            <a href="fosil.php" class="nav-link">Fosil</a>
+              <a href="fosil.php" class="nav-link">Fosil</a>
             </li>
             <li class="nav-item">
               <a href="fasilitas.php" class="nav-link">Fasilitas</a>
@@ -89,8 +104,7 @@
       </div> <!-- .container -->
     </nav> <!-- .navbar -->
 
-    <div class="page-banner bg-img bg-img-parallax overlay-dark"
-      style="background-image: url(../assets/img/gapura_trinil.jpg);">
+    <div class="page-banner bg-img bg-img-parallax overlay-dark" style="background-image: url(../assets/img/gapura_trinil.jpg);">
       <div class="container h-100">
         <div class="row justify-content-center align-items-center h-100">
           <div class="col-lg-8">
@@ -108,7 +122,7 @@
   </header>
 
   <main>
-  <div class="page-section">
+    <div class="page-section">
       <div class="container">
         <div class="text-center">
           <h2 class="title-section mb-3">Reservasi Tiket</h2>
@@ -120,81 +134,107 @@
               <div class="row">
                 <div class="col-12 py-2">
                   <label for="nama" class="fg-grey">Nama</label>
-                  <input type="text" name="nama" placeholder="Enter name.." class="form-control" required>
+                  <input type="text" name="nama" value="<?php echo ($data != null) ? $data["nama_pemesan"] : ''; ?>" placeholder="Enter name.." class="form-control" required>
                 </div>
                 <div class="col-12 py-2">
                   <label for="no ktp" class="fg-grey">No KTP</label>
-                  <input type="text" name="no_ktp" placeholder="No KTP.." class="form-control" required>
+                  <input type="text" name="no_ktp" value="<?php echo ($data != null) ? $data["no_ktp"] : ''; ?>" placeholder="No KTP.." class="form-control" required>
                 </div>
                 <div class="col-12 py-2">
                   <label for="no hp" class="fg-grey">No HP</label>
-                  <input type="text" name="no_hp" placeholder="No HP.." class="form-control" required>
+                  <input type="text" name="no_hp" value="<?php echo ($data != null) ? $data["no_hp"] : ''; ?>" placeholder="No HP.." class="form-control" required>
                 </div>
                 <div class="col-12 py-2">
                   <label for="alamat" class="fg-grey">Alamat</label>
-                  <textarea id="text" rows="8" name ="alamat" class="form-control" placeholder="Enter text.."></textarea>
+                  <textarea id="text" rows="8" name="alamat" class="form-control" placeholder="Enter text.."><?php echo ($data != null) ? $data["alamat"] : ''; ?></textarea>
                 </div>
                 <div class="col-sm-6 py-2">
                   <label for="tanggal" class="fg-grey">Tanggal</label>
-                  <input type="date" name="tanggal" placeholder="" class="form-control" required>
+                  <input type="date" name="tanggal" value="<?php echo ($data != null) ? $data["tanggal"] : ''; ?>" placeholder="" class="form-control" required>
                 </div>
                 <div class="col-sm-6 py-2">
                   <label for="total tiket" class="fg-grey">Total</label>
-                  <input type="combo-box" name="total" placeholder="" class="form-control" required>
+                  <input type="combo-box" id="totalHarga" value="<?php echo ($data != null) ? $data["total_harga"] : ''; ?>" name="total" placeholder="" class="form-control">
                 </div>
                 <div class="col-12 py-2">
                   <label for="jenis rekening" class="fg-grey">Jenis Rekening</label>
                   <br>
                   <SELECT class="input-control" name="tabungan" required>
-                <option value="">---PILIH---</option>
-                <?php
-                $tabungan = mysqli_query($conn, "SELECT * FROM tb_rekening ORDER BY jenis_rek DESC");
-                WHILE($r = mysqli_fetch_array($tabungan)){
-                ?>
-                <option value="<?php echo $r['id_rek']?>"><?php echo $r['jenis_rek']?>-</option>
-                <?php } ?>
-                </SELECT>
+                    <option value="">---PILIH---</option>
+                    <?php if ($data != null) { ?>
+                      <option selected value="<?php echo $data["jenis_rek"]; ?>">-</option>
+                    <?php } ?>
+                    <?php
+                    $tabungan = mysqli_query($conn, "SELECT * FROM tb_rekening ORDER BY jenis_rek DESC");
+                    while ($r = mysqli_fetch_array($tabungan)) {
+                    ?>
+                      <option value="<?php echo $r['id_rek'] ?>"><?php echo $r['jenis_rek'] ?>-</option>
+                    <?php } ?>
+                  </SELECT>
                 </div>
                 <div class="col-12 mt-3">
-                <input type="submit" name="submit" value="Simpan" class="nav-link">
+                  <input type="submit" name="submit" value="Simpan" class="nav-link">
                 </div>
                 <?php
-            if(isset($_POST['submit'])){
-                $nama = $_POST['nama'];
-                $no_ktp = $_POST['no_ktp'];
-                $no_hp = $_POST['no_hp'];
-                $alamat = $_POST['alamat'];
-                $tanggal = $_POST['tanggal'];
-                $total = $_POST['total'];
-                $tabungan = $_POST['tabungan'];
+                if (isset($_POST['submit'])) {
+                  $nama = $_POST['nama'];
+                  $no_ktp = $_POST['no_ktp'];
+                  $no_hp = $_POST['no_hp'];
+                  $alamat = $_POST['alamat'];
+                  $tanggal = $_POST['tanggal'];
+                  $total = $_POST['total'];
+                  $tabungan = $_POST['tabungan'];
+                  $_SESSION['no_ktp'] = $no_ktp;
+                  // var_dump($_SESSION['no_ktp']); die;
+                  if (isset($_SESSION['no_ktp'])) {
+                    $sql = "UPDATE tb_pemesanan SET total_harga='$total' WHERE no_ktp='$no_ktp'";
 
-                $insert = mysqli_query($conn, "INSERT INTO tb_pemesanan VALUES (
+                    if ($conn->query($sql) === TRUE) {
+                      $_POST = array();
+
+                      // echo "Record updated successfully";
+                      echo "<script>window.location='reservasi.php'</script>";
+                      // header('location:'.$_SERVER['REQUEST_URI'].'');
+                    } else {
+                      echo "Error updating record: " . $conn->error;
+                    }
+                  } else {
+                    // $nama = $_POST['nama'];
+                    // $no_ktp = $_POST['no_ktp'];
+                    // $no_hp = $_POST['no_hp'];
+                    // $alamat = $_POST['alamat'];
+                    // $tanggal = $_POST['tanggal'];
+                    // $total = $_POST['total'];
+                    // $tabungan = $_POST['tabungan'];
+
+                    $insert = mysqli_query($conn, "INSERT INTO tb_pemesanan VALUES (
                      null, 
-                     '".$nama."',
-                     '".$no_ktp."',
-                     '".$no_hp."',
-                     '".$alamat."',
-                     '".$tanggal."',
-                     '".$total."',
-                     '".$tabungan."'
+                     '" . $nama . "',
+                     '" . $no_ktp . "',
+                     '" . $no_hp . "',
+                     '" . $alamat . "',
+                     '" . $tanggal . "',
+                     '" . $total . "',
+                     '" . $tabungan . "'
                      ) ");
 
-                if($insert){
-                    echo '<script>alert("Data anda sudah tersimpan")</script>';
-                    echo '<script>window.location="?page=reservasi.php"</script>';
-                }else{
-                    echo 'Gagal' .mysqli_error($conn);
+                    if ($insert) {
+                      echo '<script>alert("Data anda sudah tersimpan")</script>';
+                      // echo '<script>window.location="?page=reservasi.php"</script>';
+                    } else {
+                      echo 'Gagal' . mysqli_error($conn);
+                    }
+                  }
                 }
-            }
-            ?>
-                
+                ?>
+
             </form>
           </div>
         </div>
       </div> <!-- .container -->
     </div> <!-- .page-section -->
 
-    
+
     <div class="page-section">
       <div class="container">
         <div class="text-center">
@@ -203,63 +243,40 @@
         </div>
         <div class="row justify-content-center mt-5">
           <div class="col-lg-8">
-            <form action="#" class="form-contact" enctype="multipart/form-data" method="POST">
-              <div class="row">
+            <!-- <form action="#" class="form-contact" enctype="multipart/form-data" method="POST"> -->
+            <div class="row">
               <div class="col-sm-6 py-2">
-                  <label for="pemesan" class="fg-grey">Pemesan</label><br>
-                  <SELECT class="input-control" name="pemesan" required>
-                  <option value="">---PILIH---</option>
-                <?php
-                $pemesan = mysqli_query($conn, "SELECT * FROM tb_pemesanan ORDER BY id_pemesanan DESC");
-                WHILE($r = mysqli_fetch_array($pemesan)){
-                ?>
-                <option value="<?php echo $r['id_pemesanan']?>"><?php echo $r['nama_pemesan']?>-</option>
-                <?php } ?>
+                <label for="pemesan" class="fg-grey">Pemesan</label><br>
+                <SELECT id="pemesan" class="input-control" name="pemesan" required>
+                  <!-- <option value="">---PILIH---</option> -->
+                  <option value="<?php echo ($data != null) ? $data["id_pemesanan"] : ''; ?>"><?php echo ($data != null) ? $data["nama_pemesan"] : ''; ?></option>
                 </SELECT>
-                </div>
-              <div class="col-sm-6 py-2">
-                  <label for="kategori tiket" class="fg-grey" >Kategori Tiket</label><br>
-                  <SELECT class="input-control" name="kategori1" required>
-                <option value="">---PILIH---</option>
-                <?php
-                $kategori1 = mysqli_query($conn, "SELECT * FROM tb_tiket ORDER BY id_tiket DESC");
-                WHILE($r = mysqli_fetch_array($kategori1)){
-                ?>
-                <option value="<?php echo $r['id_tiket']?>"><?php echo $r['kategori_tiket']?>-</option>
-                <?php } ?>
-                </SELECT>
-                </div>
-                <div class="col-sm-6 py-2">
-                  <label for="jumlah tiket" class="fg-grey" >Jumlah</label>
-                  <input type="number" name="jumlah1" placeholder="Enter jumlah.." class="form-control" required>
-                </div>
-                
-                <div class="col-12 mt-3">
-                <input type="submit" name="submit" value="Simpan" class="nav-link">
-                </div>
-                <?php
-            if(isset($_POST['submit'])){
-                $pemesan = $_POST['pemesan'];
-                $kategori1 = $_POST['kategori1'];
-                $jumlah1 = $_POST['jumlah1'];
-              
-                $insert = mysqli_query($conn, "INSERT INTO tb_beli VALUES (
-                     null, 
-                     '".$pemesan."',
-                     '".$kategori1."',
-                     '".$jumlah1."'
-                     ) ");
-
-                if($insert){
-                    echo '<script>alert("Data Tiket anda sudah tersimpan.")</script>';
-                    echo '<script>window.location="?page=reservasi.php"</script>';
-                }else{
-                    echo 'Gagal' .mysqli_error($conn);
-                }
-            }
-            ?>
               </div>
-            </form>
+              <div class="col-sm-6 py-2">
+                <label for="kategori tiket" class="fg-grey">Kategori Tiket</label><br>
+                <SELECT class="input-control" name="kategori1" id="kategori" required>
+                  <option value="">---PILIH---</option>
+                  <?php
+                  $kategori1 = mysqli_query($conn, "SELECT * FROM tb_tiket ORDER BY id_tiket DESC");
+                  while ($r = mysqli_fetch_array($kategori1)) {
+                  ?>
+                    <option value="<?php echo $r['id_tiket'] ?>"><?php echo $r['kategori_tiket'] ?>-</option>
+                  <?php } ?>
+                </SELECT>
+              </div>
+              <div class="col-sm-6 py-2">
+                <label for="jumlah tiket" class="fg-grey">Jumlah</label>
+                <input type="number" id="jumlah" name="jumlah1" placeholder="Enter jumlah.." class="form-control" required>
+              </div>
+
+              <div class="col-12 mt-3">
+                <input type="submit" id="btnSimpan" name="submit" value="Simpan" class="nav-link">
+              </div>
+              <?php
+              
+              ?>
+            </div>
+            <!-- </form> -->
           </div>
         </div>
       </div> <!-- .container -->
@@ -278,9 +295,9 @@
           <p>Pilang, Wonokerto, Pilang, Kawu, Kec. Kedunggalar, Kabupaten Ngawi, Jawa Timur 63254</p>
         </div>
         <div class="col-lg-3 py-3">
-        <h5>Kota</h5>
+          <h5>Kota</h5>
           <ul class="footer-menu">
-          <li><a href="#">Ngawi Ramah</a></li>
+            <li><a href="#">Ngawi Ramah</a></li>
           </ul>
         </div>
         <div class="col-lg-3 py-3">
@@ -292,7 +309,7 @@
             <a href="#"><span class="mai-logo-linkedin"></span></a>
           </div>
         </div>
-        
+
       </div>
 
       <hr>
@@ -321,6 +338,51 @@
   <script src="../assets/js/google-maps.js"></script>
 
   <script src="../assets/js/theme.js"></script>
+
+  <script>
+    $("#btnSimpan").click(function() {
+      var nama = $("#nama").val()
+      var no_ktp = $("#no_ktp").val()
+      var no_hp = $("#no_hp").val()
+      var alamat = $("#alamat").val()
+      var total = $("#total").val()
+      var tanggal = $("#tanggal").val()
+      var tabungan = $("#tabungan").val()
+
+      var pemesan = $("#pemesan").val()
+      var jumlah = $("#jumlah").val()
+      var kategori = $("#kategori").val()
+      $.post("be/reservasi.php", {
+          // nama: nama,
+          // no_ktp: no_ktp,
+          // no_hp: no_hp,
+          // alamat: alamat,
+          // tanggal: tanggal,
+          // total: total,
+          // tabungan: tabungan
+          pemesan: pemesan,
+          jumlah: jumlah,
+          kategori: kategori
+        },
+        function(data, status) {
+          // alert("Data: " + data + "\nStatus: " + status);
+          console.log(data)
+          console.log(status)
+          if (status == "success") {
+            var totalLama = $("#totalHarga").val()
+            console.log(totalLama)
+            var harga = 5000;
+            var totalHarga = jumlah * harga
+            var totalAkhir = parseInt(totalHarga) + parseInt(totalLama)
+            // console.log('ok')
+            // if(harga != 0) {
+            $("#totalHarga").val("")
+            $("#totalHarga").val(totalAkhir)
+            // }
+          }
+        });
+    });
+  </script>
 
 </body>
 
