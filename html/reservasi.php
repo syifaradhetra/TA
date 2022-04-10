@@ -130,7 +130,7 @@ if (isset($_SESSION['no_ktp'])) {
         </div>
         <div class="row justify-content-center mt-5">
           <div class="col-lg-8">
-            <form action="#" class="form-contact" enctype="multipart/form-data" method="POST">
+            <form action="be/reservasi_tiket.php" class="form-contact" enctype="multipart/form-data" method="POST">
               <div class="row">
                 <div class="col-12 py-2">
                   <label for="nama" class="fg-grey">Nama</label>
@@ -175,58 +175,6 @@ if (isset($_SESSION['no_ktp'])) {
                 <div class="col-12 mt-3">
                   <input type="submit" name="submit" value="Simpan" class="nav-link">
                 </div>
-                <?php
-                if (isset($_POST['submit'])) {
-                  $nama = $_POST['nama'];
-                  $no_ktp = $_POST['no_ktp'];
-                  $no_hp = $_POST['no_hp'];
-                  $alamat = $_POST['alamat'];
-                  $tanggal = $_POST['tanggal'];
-                  $total = $_POST['total'];
-                  $tabungan = $_POST['tabungan'];
-                  $_SESSION['no_ktp'] = $no_ktp;
-                  // var_dump($_SESSION['no_ktp']); die;
-                  if (isset($_SESSION['no_ktp'])) {
-                    $sql = "UPDATE tb_pemesanan SET total_harga='$total' WHERE no_ktp='$no_ktp'";
-
-                    if ($conn->query($sql) === TRUE) {
-                      $_POST = array();
-
-                      // echo "Record updated successfully";
-                      echo "<script>window.location='reservasi.php'</script>";
-                      // header('location:'.$_SERVER['REQUEST_URI'].'');
-                    } else {
-                      echo "Error updating record: " . $conn->error;
-                    }
-                  } else {
-                    // $nama = $_POST['nama'];
-                    // $no_ktp = $_POST['no_ktp'];
-                    // $no_hp = $_POST['no_hp'];
-                    // $alamat = $_POST['alamat'];
-                    // $tanggal = $_POST['tanggal'];
-                    // $total = $_POST['total'];
-                    // $tabungan = $_POST['tabungan'];
-
-                    $insert = mysqli_query($conn, "INSERT INTO tb_pemesanan VALUES (
-                     null, 
-                     '" . $nama . "',
-                     '" . $no_ktp . "',
-                     '" . $no_hp . "',
-                     '" . $alamat . "',
-                     '" . $tanggal . "',
-                     '" . $total . "',
-                     '" . $tabungan . "'
-                     ) ");
-
-                    if ($insert) {
-                      echo '<script>alert("Data anda sudah tersimpan")</script>';
-                      // echo '<script>window.location="?page=reservasi.php"</script>';
-                    } else {
-                      echo 'Gagal' . mysqli_error($conn);
-                    }
-                  }
-                }
-                ?>
 
             </form>
           </div>
@@ -260,20 +208,33 @@ if (isset($_SESSION['no_ktp'])) {
                   $kategori1 = mysqli_query($conn, "SELECT * FROM tb_tiket ORDER BY id_tiket DESC");
                   while ($r = mysqli_fetch_array($kategori1)) {
                   ?>
-                    <option value="<?php echo $r['id_tiket'] ?>"><?php echo $r['kategori_tiket'] ?>-</option>
+                    <option value="<?php echo $r['id_tiket'] ?>-<?php echo $r['harga_tiket'] ?>"><?php echo $r['kategori_tiket'] ?>-</option>
                   <?php } ?>
                 </SELECT>
               </div>
               <div class="col-sm-6 py-2">
                 <label for="jumlah tiket" class="fg-grey">Jumlah</label>
                 <input type="number" id="jumlah" name="jumlah1" placeholder="Enter jumlah.." class="form-control" required>
+                <input type="hidden" name="id_pemesan" id="idPemesan" value="<?php echo $data["id_pemesanan"] != null ? $data["id_pemesanan"] : '' ?>">
               </div>
 
               <div class="col-12 mt-3">
                 <input type="submit" id="btnSimpan" name="submit" value="Simpan" class="nav-link">
               </div>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Pemesan</th>
+                    <th scope="col">Kategori</th>
+                    <th scope="col">Jumlah</th>
+                  </tr>
+                </thead>
+                <tbody id="isiTable">
+                  
+                </tbody>
+              </table>
               <?php
-              
+
               ?>
             </div>
             <!-- </form> -->
@@ -351,7 +312,11 @@ if (isset($_SESSION['no_ktp'])) {
 
       var pemesan = $("#pemesan").val()
       var jumlah = $("#jumlah").val()
-      var kategori = $("#kategori").val()
+      var kategoriData = $("#kategori").val()
+      var kategoriArray = kategoriData.split('-')
+      var kategori = kategoriArray[0]
+      console.log(kategori)
+      var idPemesan = $("#idPemesan").val()
       $.post("be/reservasi.php", {
           // nama: nama,
           // no_ktp: no_ktp,
@@ -362,22 +327,35 @@ if (isset($_SESSION['no_ktp'])) {
           // tabungan: tabungan
           pemesan: pemesan,
           jumlah: jumlah,
-          kategori: kategori
+          kategori: kategori,
+          id_pemesan: idPemesan
         },
         function(data, status) {
           // alert("Data: " + data + "\nStatus: " + status);
           console.log(data)
-          console.log(status)
+          // console.log(status)
+          // console.log(idPemesan)
           if (status == "success") {
+            const dataPesanan = data['data']
             var totalLama = $("#totalHarga").val()
-            console.log(totalLama)
-            var harga = 5000;
+            // console.log(totalLama)
+            var harga = kategoriArray[1]
+            console.log(harga)
             var totalHarga = jumlah * harga
             var totalAkhir = parseInt(totalHarga) + parseInt(totalLama)
             // console.log('ok')
             // if(harga != 0) {
             $("#totalHarga").val("")
             $("#totalHarga").val(totalAkhir)
+            var html = ""
+            for (let index = 0; index < dataPesanan.length; index++) {
+              html += '<tr>' +
+              '<td>'+dataPesanan[index].nama_pemesan+'</td>' +
+              '<td>'+dataPesanan[index].kategori_tiket+'</td>' +
+              '<td>'+dataPesanan[index].jumlah_tiket+'</td>' +
+              '</tr>'
+            }
+            $("#isiTable").html(html)
             // }
           }
         });
