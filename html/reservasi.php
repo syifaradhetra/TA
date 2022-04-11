@@ -162,18 +162,21 @@ if (isset($_SESSION['no_ktp'])) {
                   <SELECT class="input-control" name="tabungan" required>
                     <option value="">---PILIH---</option>
                     <?php if ($data != null) { ?>
-                      <option selected value="<?php echo $data["jenis_rek"]; ?>">-</option>
-                    <?php } ?>
-                    <?php
-                    $tabungan = mysqli_query($conn, "SELECT * FROM tb_rekening ORDER BY jenis_rek DESC");
-                    while ($r = mysqli_fetch_array($tabungan)) {
-                    ?>
-                      <option value="<?php echo $r['id_rek'] ?>"><?php echo $r['jenis_rek'] ?>-</option>
-                    <?php } ?>
+                      <option selected value="<?php echo $data["jenis_rek"]; ?>"><?php echo $data["jenis_rek"]; ?></option>
+                    <?php } else { ?>
+                      <?php
+                      $tabungan = mysqli_query($conn, "SELECT * FROM tb_rekening ORDER BY jenis_rek DESC");
+                      while ($r = mysqli_fetch_array($tabungan)) {
+                      ?>
+                        <option value="<?php echo $r['id_rek'] ?>"><?php echo $r['jenis_rek'] ?>-</option>
+                    <?php }
+                    } ?>
                   </SELECT>
                 </div>
                 <div class="col-12 mt-3">
-                  <input type="submit" name="submit" value="Simpan" class="nav-link">
+                  <?php if (isset($_SESSION['no_ktp']) == false) {
+                    echo '<input type="submit" name="submit" value="Simpan" class="nav-link">';
+                  } ?>
                 </div>
 
             </form>
@@ -217,26 +220,33 @@ if (isset($_SESSION['no_ktp'])) {
                 <input type="number" id="jumlah" name="jumlah1" placeholder="Enter jumlah.." class="form-control" required>
                 <input type="hidden" name="id_pemesan" id="idPemesan" value="<?php echo $data["id_pemesanan"] != null ? $data["id_pemesanan"] : '' ?>">
               </div>
-
-              <div class="col-12 mt-3">
+            </div>
+            <br>
+            <p>Klik simpan untuk memilih tiket kemudian klik submit untuk memproses tiket</p>
+            <div class="row">
+              <div class="col-2 mt-3">
                 <input type="submit" id="btnSimpan" name="submit" value="Simpan" class="nav-link">
               </div>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th scope="col">Pemesan</th>
-                    <th scope="col">Kategori</th>
-                    <th scope="col">Jumlah</th>
-                  </tr>
-                </thead>
-                <tbody id="isiTable">
-                  
-                </tbody>
-              </table>
-              <?php
-
-              ?>
+              <div class="col-2 mt-3">
+                <a href="checkout.php"><input type="submit" id="btnSubmit" name="submit" value="Submit" class="nav-link"></a>
+              </div>
             </div>
+            <br>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Pemesan</th>
+                  <th scope="col">Kategori</th>
+                  <th scope="col">Jumlah</th>
+                </tr>
+              </thead>
+              <tbody id="isiTable">
+
+              </tbody>
+            </table>
+            <?php
+
+            ?>
             <!-- </form> -->
           </div>
         </div>
@@ -350,10 +360,10 @@ if (isset($_SESSION['no_ktp'])) {
             var html = ""
             for (let index = 0; index < dataPesanan.length; index++) {
               html += '<tr>' +
-              '<td>'+dataPesanan[index].nama_pemesan+'</td>' +
-              '<td>'+dataPesanan[index].kategori_tiket+'</td>' +
-              '<td>'+dataPesanan[index].jumlah_tiket+'</td>' +
-              '</tr>'
+                '<td>' + dataPesanan[index].nama_pemesan + '</td>' +
+                '<td>' + dataPesanan[index].kategori_tiket + '</td>' +
+                '<td>' + dataPesanan[index].jumlah_tiket + '</td>' +
+                '</tr>'
             }
             $("#isiTable").html(html)
             // }
